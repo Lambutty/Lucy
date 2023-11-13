@@ -3,12 +3,13 @@ from warehouse_assistant import WarehouseAssistant
 
 
 def main():
-    # im Memory
-    database = ChromaDB()
+
+    database = ChromaDB(persistent=True)
 
     assistant = WarehouseAssistant(
+        agent_name="Luna",
         chroma_db_instance=database,
-        debug=False,
+        debug=True,
         insult="kleiner Lappen",
         listen_for_tick_duration=14,
         )
