@@ -11,31 +11,43 @@ from spots import Spots
 
 class WarehouseAssistant:
     
-    def __init__(self,*, chroma_db_instance):
-        self.STOP = "STOP"
-        self.AGENT_NAME = "Lucy"
+    def __init__(self,*,
+                 chroma_db_instance,
+                 agent_name:str = "Lucy",
+                 stop_phrase:str = "stop",
+                 listen_for_tick_duration:int = 14,
+                 speak_engine:str = "sapi5",
+                 debug:bool= True,
+                 insult: str = "Pisser"
+                 ):
+        self.stop_phrase = stop_phrase
+        self.agent_name = agent_name
         self.q = queue.Queue()
-        self.engine = pyttsx3.init(driverName='sapi5') 
+        self.engine = pyttsx3.init(driverName = speak_engine) 
         self.cache = set()
         self.count = 0
-        self.Listen = False
+        self.should_listen = False
         self.say_please = False
         self.db = chroma_db_instance
+        self.listen_for_tick_duration = listen_for_tick_duration
+        self.debug = debug
+        self.insult = insult
     
-    def listen(self,text):
-        print(self.cache)
-        should_stop = self.STOP in text or "stopp" in text or "shop" in text
+    def listen(self,text:str) -> None|str:
+        if self.debug:
+            print(self.cache)
+        should_stop = self.stop_phrase.lower() in text
         if text == "" or should_stop:
-            if self.count >= 14 or should_stop:
+            if self.count >= self.listen_for_tick_duration or should_stop:
                 self.count = 0
-                self.Listen = False
+                self.should_listen = False
                 try:
-                    m = max(self.cache , key = len)
+                    search_string = max(self.cache , key = len)
                 except Exception:
                     self.cache = set()
                     return None
                 self.cache = set()
-                return m
+                return search_string
             self.count+=1
         elif text in self.cache:
             return None
@@ -44,12 +56,11 @@ class WarehouseAssistant:
             return None
         
         
-    def convert(self,k: str, d : dict):
-        return json.loads(d)[k]
+    def convert(self,key: str, dict_ : dict) -> str:
+        return json.loads(dict_)[key]
 
     def check_for_agent_name(self,key: str, res: dict) -> bool:
-        return self.convert(key,res).lower() == self.AGENT_NAME.lower()
-
+        return self.convert(key,res).lower() == self.agent_name.lower()
 
     def callback(self,indata, frames, time, status):
         """This is called (from a separate thread) for each audio block."""
@@ -116,39 +127,39 @@ class WarehouseAssistant:
                     data = self.q.get()
                     if rec.AcceptWaveform(data):
                         
-                        if not self.say_please and self.check_for_agent_name('text',rec.Result()):
-                            self.Listen = True
+                        if not self.say_please and self.check_for_agent_name('text', rec.Result()):
+                            self.should_listen = True
                             self.say_please = True
                             self.engine.say("Bitte")
                             self.engine.runAndWait()
-                        if self.Listen and (b:= self.listen(self.convert('text',rec.Result()))):
-                            self.Listen = False
+                        if self.should_listen and (query_text := self.listen(self.convert('text',rec.Result()))):
+                            self.should_listen = False
                             results = self.db.collection.query(
-                                    query_texts=[b],
+                                    query_texts=[query_text],
                                     n_results=1,
                                     #where={"metadata_field": "document1"}, # optional filter
                                     #where_document={"$contains": "nuts"} # optional filter
                                 )
 
-                            self.engine.say("Sollten in" + results['metadatas'][0][0][Spots.GANG.value] + "sein du pisser")                    
+                            self.engine.say(f"Sollten in {Spots.GANG.value}" + results['metadatas'][0][0][Spots.GANG.value] + f"sein du {self.insult}")                    
                             self.engine.runAndWait()
                             self.say_please = False
                     else:
                         if not self.say_please and self.check_for_agent_name('partial',rec.PartialResult()):
-                            self.Listen = True
+                            self.should_listen = True
                             self.say_please = True
                             self.engine.say("Bitte")
                             self.engine.runAndWait()
-                        if self.Listen and (b:= self.listen(self.convert('partial',rec.PartialResult()))):
-                            self.Listen = False
+                        if self.should_listen and (query_text := self.listen(self.convert('partial', rec.PartialResult()))):
+                            self.should_listen = False
                             results = self.db.collection.query(
-                                    query_texts=[b],
+                                    query_texts=[query_text],
                                     n_results=1,
                                     #where={"metadata_field": "document1"}, # optional filter
                                     #where_document={"$contains": "nuts"} # optional filter
                             )
                             
-                            self.engine.say("Sollten in" + results['metadatas'][0][0][Spots.GANG.value] + "sein du pisser")                    
+                            self.engine.say(f"Sollten in {Spots.GANG.value}" + results['metadatas'][0][0][Spots.GANG.value] + f"sein du {self.insult}")                    
                             self.engine.runAndWait()
                             self.say_please = False
                         
