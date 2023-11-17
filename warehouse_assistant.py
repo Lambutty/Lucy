@@ -60,7 +60,10 @@ class WarehouseAssistant:
         return json.loads(dict_)[key]
 
     def check_for_agent_name(self,key: str, res: dict) -> bool:
-        return self.convert(key,res).lower() == self.agent_name.lower()
+        if self.debug:
+            if(b:= self.convert(key,res).lower()):
+                print(b) 
+        return self.agent_name.lower() in set(self.convert(key,res).lower().split(" "))
 
     def callback(self,indata, frames, time, status):
         """This is called (from a separate thread) for each audio block."""
