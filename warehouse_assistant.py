@@ -12,7 +12,7 @@ from spots import Spots
 class WarehouseAssistant:
     
     def __init__(self,*,
-                 chroma_db_instance,
+                 collection,
                  agent_name:str = "Lucy",
                  stop_phrase:str = "stop",
                  listen_for_tick_duration:int = 14,
@@ -28,7 +28,7 @@ class WarehouseAssistant:
         self.count = 0
         self.should_listen = False
         self.say_please = False
-        self.db = chroma_db_instance
+        self.collection = collection
         self.listen_for_tick_duration = listen_for_tick_duration
         self.debug = debug
         self.insult = insult
@@ -119,8 +119,7 @@ class WarehouseAssistant:
             else:
                 dump_fn = None
 
-            with sd.RawInputStream(samplerate=args.samplerate, blocksize = 8000, device=args.device,
-                    dtype="int16", channels=1, callback=self.callback):
+            with sd.RawInputStream(samplerate=args.samplerate, blocksize = 8000, device=args.device, dtype="int16", channels=1, callback=self.callback):
                 print("#" * 80)
                 print("Press Ctrl+C to stop the recording")
                 print("#" * 80)
@@ -137,14 +136,14 @@ class WarehouseAssistant:
                             self.engine.runAndWait()
                         if self.should_listen and (query_text := self.listen(self.convert('text',rec.Result()))):
                             self.should_listen = False
-                            results = self.db.collection.query(
+                            results = self.collection.query(
                                     query_texts=[query_text],
                                     n_results=1,
                                     #where={"metadata_field": "document1"}, # optional filter
                                     #where_document={"$contains": "nuts"} # optional filter
                                 )
 
-                            self.engine.say(f"Sollten in {Spots.GANG.value}" + results['metadatas'][0][0][Spots.GANG.value] + f"sein du {self.insult}")                    
+                            self.engine.say(f"Sollten in {Spots.GANG.value}" + str(results['metadatas'][0][0][Spots.GANG.value]) + f"sein du {self.insult}")                    
                             self.engine.runAndWait()
                             self.say_please = False
                     else:
@@ -155,14 +154,14 @@ class WarehouseAssistant:
                             self.engine.runAndWait()
                         if self.should_listen and (query_text := self.listen(self.convert('partial', rec.PartialResult()))):
                             self.should_listen = False
-                            results = self.db.collection.query(
+                            results = self.collection.query(
                                     query_texts=[query_text],
                                     n_results=1,
                                     #where={"metadata_field": "document1"}, # optional filter
                                     #where_document={"$contains": "nuts"} # optional filter
                             )
                             
-                            self.engine.say(f"Sollten in {Spots.GANG.value}" + results['metadatas'][0][0][Spots.GANG.value] + f"sein du {self.insult}")                    
+                            self.engine.say(f"Sollten in {Spots.GANG.value}" + str(results['metadatas'][0][0][Spots.GANG.value]) + f"sein du {self.insult}")                    
                             self.engine.runAndWait()
                             self.say_please = False
                         
@@ -174,3 +173,4 @@ class WarehouseAssistant:
             parser.exit(0)
         except Exception as e:
             parser.exit(type(e).__name__ + ": " + str(e))
+            

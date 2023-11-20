@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Interaction</title>
+    <button onclick="makeRequest()"></button>
+</head>
+<body>
+
+<script>
+    // Set your API endpoint URLs
+    const urlStartListening = 'http://127.0.0.1:5000/start-listening';
+    const urlStopListening = 'http://127.0.0.1:5000/stop-listening';
+
+    // Set your username and password
+    const username = 'admin';
+    const password = 'password';
+
+    // Function to make requests with basic authentication
+    async function makeRequest() {
+        method = 'GET'
+        url = 'http://127.0.0.1:5000/start-listening'
+        try {
+            console.log("here")
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': 'Basic ' + btoa(username + ':' + password),
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+            });
+
+            const data = await response.json();
+            console.log(data);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Make requests to the protected endpoints
+    
+</script>
+
+</body>
+</html>

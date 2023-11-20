@@ -1,5 +1,5 @@
 from enum import Enum
 class Spots(Enum):
-    GANG = "GANG"
+    GANG = "Gang"
     REIHE = "REIHE"
     REGAL = "REGAL"    
