@@ -164,7 +164,8 @@ class WarehouseAssistant:
                             self.engine.say(f"Sollten in {Spots.GANG.value}" + str(results['metadatas'][0][0][Spots.GANG.value]) + f"sein du {self.insult}")                    
                             self.engine.runAndWait()
                             self.say_please = False
-                        
+
+                    self.engine.say("PS: Deine Mutter stinkt nach Wurstwasser.")    
                     if dump_fn is not None:
                         dump_fn.write(data)
 
